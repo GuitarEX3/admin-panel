@@ -383,37 +383,78 @@
 <!-- แก้แค่ส่วน script ด้านล่างนี้จากของคุณ -->
 
 <script>
-function getCommand(action) {
-  const room = document.getElementById('selRoom').value;
-  const date = document.getElementById('inDate').value;
-  const name = document.getElementById('inName').value;
+  // 🔧 ใส่ URL จาก GAS Deploy ตรงนี้
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycbxNn2Sxidn0Ph927Na20pzD7Q9pxB70aS0DVMMtlaoU92N8esda0S1NAU6mZ8omOUGB/exec';
 
-  const verb = action === 'approve' ? 'อนุมัติ' : 'ปฏิเสธ';
-
-  let text = `${verb} : ${room} | ${date}`;
-  if (name) text += ` | ${name}`;
-
-  return text;
-}
-
-function sendAction(action) {
-  const date = document.getElementById('inDate').value;
-  if (!date) {
-    alert('กรุณาเลือกวัน');
-    return;
+  function getCommand(action) {
+    const room = document.getElementById('selRoom').value;
+    const date = document.getElementById('inDate').value;
+    const name = document.getElementById('inName').value;
+    const verb = action === 'approve' ? 'อนุมัติ' : 'ปฏิเสธ';
+    let text = `${verb} : ${room} | ${date}`;
+    if (name) text += ` | ${name}`;
+    return text;
   }
 
-  const text = getCommand(action);
+  async function sendToLine(text, btnId) {
+    const btn = document.getElementById(btnId);
+    btn.classList.add('loading');
+    btn.disabled = true;
 
-  const url = `https://line.me/R/msg/text/?${encodeURIComponent(text)}`;
-  window.open(url, '_blank');
-}
+    try {
+      const res = await fetch(GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' }, // ✅ หลีกเลี่ยง CORS preflight
+        body: JSON.stringify({ text })
+      });
 
-function sendPending() {
-  const text = "รายการรอตรวจสอบ";
-  const url = `https://line.me/R/msg/text/?${encodeURIComponent(text)}`;
-  window.open(url, '_blank');
-}
+      const json = await res.json();
+
+      if (json.status === 'ok') {
+        showToast('✅ ส่งสำเร็จ', 'success');
+      } else {
+        showToast('❌ GAS ตอบกลับ error', 'error');
+        console.error(json);
+      }
+    } catch (err) {
+      showToast('❌ ส่งไม่สำเร็จ: ' + err.message, 'error');
+      console.error(err);
+    } finally {
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    }
+  }
+
+  function sendAction(action) {
+    const date = document.getElementById('inDate').value;
+    if (!date) { alert('กรุณาเลือกวัน'); return; }
+    const text = getCommand(action);
+    const btnId = action === 'approve' ? 'btnApprove' : 'btnReject';
+    sendToLine(text, btnId);
+  }
+
+  function sendPending() {
+    sendToLine('รายการรอตรวจสอบ', 'btnPending');
+  }
+
+  function updatePreview() {
+    const date = document.getElementById('inDate').value;
+    const box = document.getElementById('previewBox');
+    const cmd = document.getElementById('previewCmd');
+    if (date) {
+      box.classList.add('show');
+      cmd.textContent = getCommand('approve');
+    } else {
+      box.classList.remove('show');
+    }
+  }
+
+  function showToast(msg, type = '') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'show ' + type;
+    setTimeout(() => { t.className = ''; }, 3000);
+  }
 </script>
 </body>
 </html>
