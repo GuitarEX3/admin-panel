@@ -383,7 +383,7 @@
 <!-- แก้แค่ส่วน script ด้านล่างนี้จากของคุณ -->
 
 <script>
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbwW-eKbRt4BWSKBucQq_m4Q-NIbwXhCKJjmKNbXOeoZlYHtvQFe4H3zHrP0NUfh5so5/exec'; // ใส่ของจริง
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwW-eKbRt4BWSKBucQq_m4Q-NIbwXhCKJjmKNbXOeoZlYHtvQFe4H3zHrP0NUfh5so5/exec';
 
 function showToast(msg) {
   alert(msg);
@@ -396,28 +396,66 @@ function getCommand(action) {
   return `${verb} : ${room} | ${date}`;
 }
 
+function setLoading(btn, isLoading) {
+  if (isLoading) {
+    btn.classList.add('loading');
+    btn.disabled = true;
+  } else {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  }
+}
+
 async function sendToServer(text) {
-  await fetch(GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify({ text })
-  });
+  try {
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ text })
+    });
+
+    const data = await res.json();
+
+    if (data.status !== 'ok') {
+      throw new Error('server error');
+    }
+
+  } catch (err) {
+    showToast('❌ ส่งไม่สำเร็จ');
+    console.error(err);
+  }
 }
 
 async function sendAction(action) {
+  const btn = action === 'approve'
+    ? document.getElementById('btnApprove')
+    : document.getElementById('btnReject');
+
   const date = document.getElementById('inDate').value;
   if (!date) {
     showToast('กรุณาเลือกวัน');
     return;
   }
 
+  setLoading(btn, true);
+
   const command = getCommand(action);
   await sendToServer(command);
 
+  setLoading(btn, false);
   showToast('ส่งแล้ว: ' + command);
 }
 
 async function sendPending() {
+  const btn = document.getElementById('btnPending');
+
+  setLoading(btn, true);
+
   await sendToServer('รายการรอตรวจสอบ');
+
+  setLoading(btn, false);
   showToast('ส่งรายการรอตรวจสอบแล้ว');
 }
 </script>
