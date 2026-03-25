@@ -399,60 +399,45 @@
 
 <div id="toast"></div>
 
+<!-- แก้แค่ส่วน script ด้านล่างนี้จากของคุณ -->
+
 <script>
-const DEFAULT_TOKEN = 'YOUR_LINE_CHANNEL_ACCESS_TOKEN_HERE';
-const DEFAULT_ADMIN_ID = 'YOUR_ADMIN_LINE_USER_ID_HERE';
-
-function getCfg() {
-  return {
-    token: localStorage.getItem('cfg_token') || DEFAULT_TOKEN,
-    adminId: localStorage.getItem('cfg_adminId') || DEFAULT_ADMIN_ID
-  };
-}
-
-function saveConfig() {
-  localStorage.setItem('cfg_token', document.getElementById('cfgToken').value.trim());
-  localStorage.setItem('cfg_adminId', document.getElementById('cfgAdminId').value.trim());
-  showToast('✅ บันทึกแล้ว', 'success');
-}
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwW-eKbRt4BWSKBucQq_m4Q-NIbwXhCKJjmKNbXOeoZlYHtvQFe4H3zHrP0NUfh5so5/exec'; // ใส่ของจริง
 
 function showToast(msg) {
   alert(msg);
 }
 
-function switchTab(name) {
-  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
+function getCommand(action) {
+  const room = document.getElementById('selRoom').value;
+  const date = document.getElementById('inDate').value;
+  const verb = action === 'approve' ? 'อนุมัติ' : 'ปฏิเสธ';
+  return `${verb} : ${room} | ${date}`;
 }
 
-function updatePreview() {}
-
-function sendAction(type) {
-  alert(type);
+async function sendToServer(text) {
+  await fetch(GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify({ text })
+  });
 }
 
-/* ✅ ฟังก์ชันใหม่ */
-async function sendPending() {
-  const cfg = getCfg();
-
-  if (!cfg.token || !cfg.adminId) {
-    alert('ตั้งค่า Token ก่อน');
+async function sendAction(action) {
+  const date = document.getElementById('inDate').value;
+  if (!date) {
+    showToast('กรุณาเลือกวัน');
     return;
   }
 
-  await fetch('https://api.line.me/v2/bot/message/push', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + cfg.token
-    },
-    body: JSON.stringify({
-      to: cfg.adminId,
-      messages: [{ type: 'text', text: 'รายการรอตรวจสอบ' }]
-    })
-  });
+  const command = getCommand(action);
+  await sendToServer(command);
 
-  alert('ส่งแล้ว');
+  showToast('ส่งแล้ว: ' + command);
+}
+
+async function sendPending() {
+  await sendToServer('รายการรอตรวจสอบ');
+  showToast('ส่งรายการรอตรวจสอบแล้ว');
 }
 </script>
 
