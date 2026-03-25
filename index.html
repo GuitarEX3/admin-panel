@@ -383,17 +383,32 @@
 <!-- แก้แค่ส่วน script ด้านล่างนี้จากของคุณ -->
 
 <script>
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbyatHrtDY5qqzLX1ANFBsRJtJTp3P5ZPQQX5DLnqUBlqbBKmScLH0k5oiB6yAf7Z0hn/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbztTyKUjAaUJQx_vB3WB-Ygc_SMxJ8mQ6cw5RUwe2PyKlFRwQ0ncDHOxpNuLWZpZKU9/exec';
 
 function showToast(msg) {
   alert(msg);
 }
 
+function updatePreview() {
+  const date = document.getElementById('inDate').value;
+  if (!date) return;
+
+  const approveCmd = getCommand('approve');
+  document.getElementById('previewCmd').innerText = approveCmd;
+  document.getElementById('previewBox').classList.add('show');
+}
+
 function getCommand(action) {
   const room = document.getElementById('selRoom').value;
   const date = document.getElementById('inDate').value;
+  const name = document.getElementById('inName').value;
+
   const verb = action === 'approve' ? 'อนุมัติ' : 'ปฏิเสธ';
-  return `${verb} : ${room} | ${date}`;
+
+  let text = `${verb} : ${room} | ${date}`;
+  if (name) text += ` | ${name}`;
+
+  return text;
 }
 
 function setLoading(btn, isLoading) {
@@ -410,17 +425,17 @@ async function sendToServer(text) {
   try {
     await fetch(GAS_URL, {
       method: 'POST',
-      mode: 'no-cors', // 🔥 เพิ่มบรรทัดนี้
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'text/plain;charset=UTF-8' // ✅ สำคัญมาก
       },
-      body: JSON.stringify({ text })
+      body: JSON.stringify({ text }) // ยังใช้ JSON ได้
     });
 
-    showToast('ส่งแล้ว');
+    return true;
 
   } catch (err) {
-    showToast('❌ ส่งไม่สำเร็จ');
+    console.error(err);
+    return false;
   }
 }
 
@@ -438,10 +453,15 @@ async function sendAction(action) {
   setLoading(btn, true);
 
   const command = getCommand(action);
-  await sendToServer(command);
+  const ok = await sendToServer(command);
 
   setLoading(btn, false);
-  showToast('ส่งแล้ว: ' + command);
+
+  if (ok) {
+    showToast('✅ ส่งแล้ว: ' + command);
+  } else {
+    showToast('❌ ส่งไม่สำเร็จ');
+  }
 }
 
 async function sendPending() {
@@ -449,12 +469,16 @@ async function sendPending() {
 
   setLoading(btn, true);
 
-  await sendToServer('รายการรอตรวจสอบ');
+  const ok = await sendToServer('รายการรอตรวจสอบ');
 
   setLoading(btn, false);
-  showToast('ส่งรายการรอตรวจสอบแล้ว');
+
+  if (ok) {
+    showToast('📋 ส่งรายการรอตรวจสอบแล้ว');
+  } else {
+    showToast('❌ ส่งไม่สำเร็จ');
+  }
 }
 </script>
-
 </body>
 </html>
