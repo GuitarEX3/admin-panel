@@ -408,23 +408,19 @@ function setLoading(btn, isLoading) {
 
 async function sendToServer(text) {
   try {
-    const res = await fetch(GAS_URL, {
+    await fetch(GAS_URL, {
       method: 'POST',
+      mode: 'no-cors', // 🔥 เพิ่มบรรทัดนี้
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ text })
     });
 
-    const data = await res.json();
-
-    if (data.status !== 'ok') {
-      throw new Error('server error');
-    }
+    showToast('ส่งแล้ว');
 
   } catch (err) {
     showToast('❌ ส่งไม่สำเร็จ');
-    console.error(err);
   }
 }
 
