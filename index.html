@@ -4,232 +4,286 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Panel — ระบบจองที่พัก</title>
-  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Chakra+Petch:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0D1117;
-      --surface: #161B22;
-      --surface2: #1C2330;
-      --border: #30363D;
-      --primary: #58A6FF;
-      --primary-dim: rgba(88,166,255,0.12);
-      --success: #3FB950;
-      --success-dim: rgba(63,185,80,0.12);
-      --danger: #F85149;
-      --danger-dim: rgba(248,81,73,0.12);
+      --primary: #2C5F8A;
+      --primary-light: #3A7CBD;
+      --primary-dark: #1A3F5C;
+      --accent: #E8A44A;
+      --accent-light: #F5C272;
+      --success: #2D8A5E;
+      --success-dim: rgba(45,138,94,0.12);
+      --danger: #C0392B;
+      --danger-dim: rgba(192,57,43,0.12);
       --warning: #D29922;
       --warning-dim: rgba(210,153,34,0.12);
-      --text: #E6EDF3;
-      --text-muted: #7D8590;
-      --text-dim: #484F58;
-      --radius: 10px;
-      --font-display: 'Chakra Petch', sans-serif;
-      --font-body: 'Sarabun', sans-serif;
+      --bg: #F4F7FB;
+      --card: #FFFFFF;
+      --text: #1A2A3A;
+      --text-muted: #6B7C8D;
+      --border: #D8E4EF;
+      --shadow: 0 4px 24px rgba(44,95,138,0.10);
+      --radius: 14px;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
+      font-family: 'Prompt', sans-serif;
       background: var(--bg);
-      color: var(--text);
-      font-family: var(--font-body);
       min-height: 100vh;
+      padding: 0 0 40px 0;
+      color: var(--text);
     }
 
-    .wrapper {
-      max-width: 720px;
-      margin: 0 auto;
-      padding: 0 16px 60px;
+    /* ── Header ── */
+    .header {
+      background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 60%, var(--primary-light) 100%);
+      padding: 32px 24px 48px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
     }
-
-    header {
-      padding: 28px 0 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 28px;
-    }
-
-    .header-left { display: flex; align-items: center; gap: 12px; }
-    .logo-mark {
-      width: 40px; height: 40px;
-      background: linear-gradient(135deg, var(--primary), #388BFD);
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px;
-    }
-    .header-title {
-      font-family: var(--font-display);
-      font-size: 17px;
-      font-weight: 600;
-    }
-    .header-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-
-    .form-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 22px 24px;
-      margin-bottom: 16px;
-    }
-
-    .form-title {
-      font-family: var(--font-display);
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 1.2px;
-      margin-bottom: 18px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .form-title::before {
+    .header::before {
       content: '';
-      width: 3px; height: 13px;
-      background: var(--primary);
-      border-radius: 2px;
+      position: absolute;
+      width: 200px; height: 200px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 50%;
+      top: -60px; right: -60px;
+    }
+    .header::after {
+      content: '';
+      position: absolute;
+      width: 140px; height: 140px;
+      background: rgba(255,255,255,0.04);
+      border-radius: 50%;
+      bottom: 10px; left: -40px;
+    }
+    .header-icon { font-size: 40px; margin-bottom: 8px; display: block; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3)); }
+    .header h1 { color: #fff; font-size: 22px; font-weight: 700; letter-spacing: 0.5px; position: relative; z-index: 1; }
+    .header p { color: rgba(255,255,255,0.75); font-size: 13px; margin-top: 4px; font-weight: 300; position: relative; z-index: 1; }
+
+    /* ── Admin Badge (เหมือน room-badge ของลูกค้า) ── */
+    .admin-badge-wrap {
+      margin: -24px 20px 0;
+      position: relative;
+      z-index: 10;
+    }
+    .admin-badge {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      border-left: 5px solid var(--accent);
+    }
+    .admin-badge-icon {
+      width: 52px; height: 52px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(232,164,74,0.35);
+    }
+    .admin-badge-info { flex: 1; }
+    .admin-badge-label { font-size: 11px; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 1px; }
+    .admin-badge-name { font-size: 20px; font-weight: 700; color: var(--primary-dark); line-height: 1.2; }
+    .admin-badge-status {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: #EBF4FF; color: var(--primary);
+      font-size: 12px; font-weight: 600;
+      padding: 3px 10px; border-radius: 20px; margin-top: 4px;
     }
 
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 14px;
+    /* ── Cards ── */
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin: 16px 20px 0;
+      padding: 22px 20px;
     }
-    @media (max-width: 520px) {
-      .form-row { grid-template-columns: 1fr 1fr; }
-    }
-
-    .form-group { display: flex; flex-direction: column; gap: 5px; }
-    .form-group label {
-      font-size: 11px;
-      font-weight: 600;
+    .card-title {
+      font-size: 13px; font-weight: 600;
       color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
+      text-transform: uppercase; letter-spacing: 1px;
+      margin-bottom: 16px;
+      display: flex; align-items: center; gap: 7px;
     }
+
+    /* ── Fields ── */
+    .field { margin-bottom: 16px; }
+    .field:last-child { margin-bottom: 0; }
+    label { display: block; font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 7px; }
 
     select, input[type="date"], input[type="text"] {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      color: var(--text);
-      font-family: var(--font-body);
-      font-size: 14px;
-      padding: 9px 12px;
       width: 100%;
-      transition: border-color 0.2s;
+      padding: 12px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-size: 15px;
+      font-family: 'Prompt', sans-serif;
+      color: var(--text);
+      background: #FAFCFE;
+      transition: border-color 0.2s, box-shadow 0.2s;
       appearance: none;
+      -webkit-appearance: none;
     }
     select:focus, input:focus {
       outline: none;
       border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(44,95,138,0.10);
+      background: #fff;
     }
-    select option { background: #1C2330; }
+    select option { background: #fff; }
 
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    /* ── Preview box ── */
+    .preview-box {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      background: #EBF4FF;
+      color: var(--primary);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 14px;
+      border-radius: 8px;
+      margin-top: 14px;
+      word-break: break-all;
+    }
+    .preview-box.show { display: flex; }
+
+    /* ── Action Buttons ── */
     .btn-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-top: 14px;
+      gap: 12px;
+      margin: 16px 20px 0;
     }
-    .btn-row.single { grid-template-columns: 1fr; }
+    .btn-row.single {
+      grid-template-columns: 1fr;
+    }
 
     .btn-action {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 7px;
-      padding: 12px 16px;
-      border-radius: 8px;
-      font-size: 14px;
+      gap: 8px;
+      padding: 15px 16px;
+      border-radius: var(--radius);
+      font-size: 16px;
       font-weight: 700;
-      font-family: var(--font-body);
+      font-family: 'Prompt', sans-serif;
       border: none;
       cursor: pointer;
-      transition: all 0.15s;
+      transition: all 0.2s;
       letter-spacing: 0.2px;
+      box-shadow: var(--shadow);
     }
+    .btn-action:active { transform: translateY(1px); }
+    .btn-action:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+
     .btn-approve {
-      background: var(--success-dim);
-      color: var(--success);
-      border: 1px solid rgba(63,185,80,0.25);
+      background: linear-gradient(135deg, #2D8A5E, #3AAD76);
+      color: #fff;
+      box-shadow: 0 6px 20px rgba(45,138,94,0.30);
     }
-    .btn-approve:hover { background: rgba(63,185,80,0.2); }
-    .btn-approve:active { transform: scale(0.97); }
+    .btn-approve:hover:not(:disabled) { box-shadow: 0 8px 24px rgba(45,138,94,0.40); }
 
     .btn-reject {
-      background: var(--danger-dim);
-      color: var(--danger);
-      border: 1px solid rgba(248,81,73,0.25);
+      background: linear-gradient(135deg, #C0392B, #E05342);
+      color: #fff;
+      box-shadow: 0 6px 20px rgba(192,57,43,0.30);
     }
-    .btn-reject:hover { background: rgba(248,81,73,0.2); }
-    .btn-reject:active { transform: scale(0.97); }
+    .btn-reject:hover:not(:disabled) { box-shadow: 0 8px 24px rgba(192,57,43,0.40); }
 
     .btn-pending {
-      background: var(--warning-dim);
-      color: var(--warning);
-      border: 1px solid rgba(210,153,34,0.25);
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+      color: #fff;
+      box-shadow: 0 6px 20px rgba(44,95,138,0.30);
     }
-    .btn-pending:hover { background: rgba(210,153,34,0.2); }
-    .btn-pending:active { transform: scale(0.97); }
+    .btn-pending:hover:not(:disabled) { box-shadow: 0 8px 24px rgba(44,95,138,0.40); }
 
-    .btn-action:disabled { opacity: 0.35; cursor: not-allowed; transform: none !important; }
+    /* ── Quick Messages ── */
+    .quick-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
 
-    .btn-action .spinner {
-      width: 13px; height: 13px;
-      border: 2px solid currentColor;
-      border-top-color: transparent;
+    .btn-quick {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 14px;
+      background: #FAFCFE;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: 'Prompt', sans-serif;
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: left;
+    }
+    .btn-quick:hover { border-color: var(--primary); background: #EBF4FF; color: var(--primary); }
+    .btn-quick:active { transform: scale(0.97); }
+    .btn-quick:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-quick .icon { font-size: 18px; flex-shrink: 0; }
+
+    /* Spinner */
+    .spinner {
+      width: 15px; height: 15px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
       border-radius: 50%;
       animation: spin 0.7s linear infinite;
       display: none;
     }
     .btn-action.loading .spinner { display: block; }
     .btn-action.loading .label { display: none; }
-    @keyframes spin { to { transform: rotate(360deg); } }
 
-    .preview-box {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px 14px;
-      margin-top: 14px;
-      font-size: 13px;
-      color: var(--text-muted);
+    .spinner-dark {
+      width: 13px; height: 13px;
+      border: 2px solid rgba(44,95,138,0.3);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
       display: none;
     }
-    .preview-box.show { display: block; }
-    .preview-box .preview-label {
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      color: var(--text-dim);
-      margin-bottom: 6px;
-    }
-    .preview-cmd {
-      color: var(--primary);
-      font-family: monospace;
-      font-size: 13px;
-      word-break: break-all;
-    }
+    .btn-quick.loading .spinner-dark { display: block; }
+    .btn-quick.loading .icon,
+    .btn-quick.loading .qtext { display: none; }
 
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Toast ── */
     #toast {
       position: fixed;
       bottom: 24px;
       left: 50%;
       transform: translateX(-50%) translateY(16px);
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 11px 18px;
-      font-size: 13px;
-      font-weight: 500;
+      background: var(--card);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: 'Prompt', sans-serif;
       color: var(--text);
-      box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+      box-shadow: 0 8px 32px rgba(44,95,138,0.18);
       z-index: 99;
       opacity: 0;
       transition: all 0.25s ease;
@@ -237,29 +291,35 @@
       white-space: nowrap;
     }
     #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-    #toast.success { border-color: rgba(63,185,80,0.4); color: var(--success); }
-    #toast.error   { border-color: rgba(248,81,73,0.4); color: var(--danger); }
+    #toast.success { border-color: rgba(45,138,94,0.5); color: var(--success); }
+    #toast.error   { border-color: rgba(192,57,43,0.4); color: var(--danger); }
   </style>
 </head>
 <body>
 
-<div class="wrapper">
+  <div class="header">
+    <span class="header-icon">🏨</span>
+    <h1>Admin Panel</h1>
+    <p>ระบบช่วยส่งข้อความของแอดมิน</p>
+  </div>
 
-  <header>
-    <div class="header-left">
-      <div class="logo-mark">🏨</div>
-      <div>
-        <div class="header-title">Admin Panel</div>
-        <div class="header-sub">ระบบช่วยส่งข้อความของแอดมิน</div>
+  <div class="admin-badge-wrap">
+    <div class="admin-badge">
+      <div class="admin-badge-icon">👨‍💼</div>
+      <div class="admin-badge-info">
+        <div class="admin-badge-label">สถานะ</div>
+        <div class="admin-badge-name">แอดมิน</div>
+        <div class="admin-badge-status">🔑 เข้าสู่ระบบแล้ว</div>
       </div>
     </div>
-  </header>
+  </div>
 
-  <div class="form-card">
-    <div class="form-title">อนุมัติ / ปฏิเสธการจอง</div>
+  <!-- ── อนุมัติ / ปฏิเสธ ── -->
+  <div class="card">
+    <div class="card-title">✅ อนุมัติ / ❌ ปฏิเสธการจอง</div>
 
     <div class="form-row">
-      <div class="form-group">
+      <div class="field">
         <label>ห้อง</label>
         <select id="selRoom" onchange="updatePreview()">
           <option value="A">ห้อง A</option>
@@ -267,63 +327,103 @@
           <option value="C">ห้อง C</option>
         </select>
       </div>
-      <div class="form-group">
+      <div class="field">
         <label>วันเช็คอิน</label>
         <input type="date" id="inDate" onchange="updatePreview()">
       </div>
-      <div class="form-group">
-        <label>ชื่อลูกค้า (ไม่บังคับ)</label>
-        <input type="text" id="inName" placeholder="เช่น สมชาย" oninput="updatePreview()">
-      </div>
+    </div>
+
+    <div class="field">
+      <label>ชื่อลูกค้า (ไม่บังคับ)</label>
+      <input type="text" id="inName" placeholder="เช่น สมชาย ใจดี" oninput="updatePreview()">
     </div>
 
     <div class="preview-box" id="previewBox">
-      <div class="preview-label">ตัวอย่างข้อความที่จะส่ง</div>
-      <div class="preview-cmd" id="previewCmd">—</div>
+      📋 <span id="previewCmd">—</span>
     </div>
-
-    <div class="btn-row">
-      <button class="btn-action btn-approve" id="btnApprove" onclick="sendAction('approve')">
-        <span class="spinner"></span>
-        <span class="label">✅ อนุมัติ</span>
-      </button>
-      <button class="btn-action btn-reject" id="btnReject" onclick="sendAction('reject')">
-        <span class="spinner"></span>
-        <span class="label">❌ ปฏิเสธ</span>
-      </button>
-    </div>
-
-    <div class="btn-row single">
-      <button class="btn-action btn-pending" id="btnPending" onclick="sendPending()">
-        <span class="spinner"></span>
-        <span class="label">📋 รายการรอตรวจสอบ</span>
-      </button>
-    </div>
-
   </div>
 
-</div>
+  <div class="btn-row">
+    <button class="btn-action btn-approve" id="btnApprove" onclick="sendAction('approve')">
+      <span class="spinner"></span>
+      <span class="label">✅ อนุมัติ</span>
+    </button>
+    <button class="btn-action btn-reject" id="btnReject" onclick="sendAction('reject')">
+      <span class="spinner"></span>
+      <span class="label">❌ ปฏิเสธ</span>
+    </button>
+  </div>
+
+  <div class="btn-row single">
+    <button class="btn-action btn-pending" id="btnPending" onclick="sendPending()">
+      <span class="spinner"></span>
+      <span class="label">📋 รายการรอตรวจสอบ</span>
+    </button>
+  </div>
+
+  <!-- ── ข้อความด่วน ── -->
+  <div class="card">
+    <div class="card-title">⚡ ข้อความด่วน</div>
+    <div class="quick-grid">
+
+      <button class="btn-quick" onclick="sendQuick(this, '💰 รอยืนยันการชำระเงิน')">
+        <span class="icon">💰</span>
+        <span class="qtext">รอยืนยันชำระเงิน</span>
+        <span class="spinner-dark"></span>
+      </button>
+
+      <button class="btn-quick" onclick="sendQuick(this, '🔑 เช็คอินเรียบร้อยแล้ว')">
+        <span class="icon">🔑</span>
+        <span class="qtext">เช็คอินแล้ว</span>
+        <span class="spinner-dark"></span>
+      </button>
+
+      <button class="btn-quick" onclick="sendQuick(this, '📸 กรุณาส่งสลิปการโอนเงิน')">
+        <span class="icon">📸</span>
+        <span class="qtext">ขอสลิปด้วย</span>
+        <span class="spinner-dark"></span>
+      </button>
+
+      <button class="btn-quick" onclick="sendQuick(this, '🚪 เช็คเอาท์เรียบร้อยแล้ว')">
+        <span class="icon">🚪</span>
+        <span class="qtext">เช็คเอาท์แล้ว</span>
+        <span class="spinner-dark"></span>
+      </button>
+
+      <button class="btn-quick" onclick="sendQuick(this, '⚠️ ยังไม่ได้รับการชำระเงิน')">
+        <span class="icon">⚠️</span>
+        <span class="qtext">ยังไม่ชำระ</span>
+        <span class="spinner-dark"></span>
+      </button>
+
+      <button class="btn-quick" onclick="sendQuick(this, '📞 กรุณาติดต่อแอดมิน')">
+        <span class="icon">📞</span>
+        <span class="qtext">ให้ติดต่อแอดมิน</span>
+        <span class="spinner-dark"></span>
+      </button>
+
+    </div>
+  </div>
 
 <div id="toast"></div>
 
 <script>
-  // 🔧 ใส่ URL จาก GAS Deploy ตรงนี้
   const GAS_URL = 'https://script.google.com/macros/s/AKfycbx5UK9PG9_mjUiJECCA3SIMLhwL3ujp3wtOwlAxKujZuWxS-rM9GI72EZIrdydVZBYG/exec';
 
   function getCommand(action) {
     const room = document.getElementById('selRoom').value;
     const date = document.getElementById('inDate').value;
     const name = document.getElementById('inName').value.trim();
-    const verb = action === 'approve' ? 'อนุมัติ' : 'ปฏิเสธ';
-    let text = `${verb} : ${room} | ${date}`;
+    const verb = action === 'approve' ? '✅ อนุมัติ' : '❌ ปฏิเสธ';
+    let text = `${verb} : ห้อง ${room} | ${date}`;
     if (name) text += ` | ${name}`;
     return text;
   }
 
   function updatePreview() {
     const date = document.getElementById('inDate').value;
-    const box = document.getElementById('previewBox');
-    const cmd = document.getElementById('previewCmd');
+    const box  = document.getElementById('previewBox');
+    const cmd  = document.getElementById('previewCmd');
     if (date) {
       box.classList.add('show');
       cmd.textContent = getCommand('approve');
@@ -332,45 +432,44 @@
     }
   }
 
-  async function sendToLine(text, btnId) {
-    const btn = document.getElementById(btnId);
-    btn.classList.add('loading');
-    btn.disabled = true;
+  async function sendToLine(text, btnEl) {
+    btnEl.classList.add('loading');
+    btnEl.disabled = true;
 
     try {
-      const res = await fetch(GAS_URL, {
+      const res  = await fetch(GAS_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify({ text })
       });
-
       const json = await res.json();
-
       if (json.status === 'ok') {
         showToast('✅ ส่งสำเร็จแล้ว!', 'success');
       } else {
         showToast('❌ เกิดข้อผิดพลาด', 'error');
-        console.error(json);
       }
     } catch (err) {
       showToast('❌ ส่งไม่สำเร็จ: ' + err.message, 'error');
-      console.error(err);
     } finally {
-      btn.classList.remove('loading');
-      btn.disabled = false;
+      btnEl.classList.remove('loading');
+      btnEl.disabled = false;
     }
   }
 
   function sendAction(action) {
     const date = document.getElementById('inDate').value;
     if (!date) { showToast('⚠️ กรุณาเลือกวันเช็คอิน', 'error'); return; }
-    const text = getCommand(action);
+    const text  = getCommand(action);
     const btnId = action === 'approve' ? 'btnApprove' : 'btnReject';
-    sendToLine(text, btnId);
+    sendToLine(text, document.getElementById(btnId));
   }
 
   function sendPending() {
-    sendToLine('📋 รายการรอตรวจสอบ', 'btnPending');
+    sendToLine('📋 รายการรอตรวจสอบ', document.getElementById('btnPending'));
+  }
+
+  function sendQuick(btnEl, text) {
+    sendToLine(text, btnEl);
   }
 
   function showToast(msg, type = '') {
