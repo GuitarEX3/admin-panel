@@ -383,21 +383,6 @@
 <!-- แก้แค่ส่วน script ด้านล่างนี้จากของคุณ -->
 
 <script>
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbztTyKUjAaUJQx_vB3WB-Ygc_SMxJ8mQ6cw5RUwe2PyKlFRwQ0ncDHOxpNuLWZpZKU9/exec';
-
-function showToast(msg) {
-  alert(msg);
-}
-
-function updatePreview() {
-  const date = document.getElementById('inDate').value;
-  if (!date) return;
-
-  const approveCmd = getCommand('approve');
-  document.getElementById('previewCmd').innerText = approveCmd;
-  document.getElementById('previewBox').classList.add('show');
-}
-
 function getCommand(action) {
   const room = document.getElementById('selRoom').value;
   const date = document.getElementById('inDate').value;
@@ -411,73 +396,23 @@ function getCommand(action) {
   return text;
 }
 
-function setLoading(btn, isLoading) {
-  if (isLoading) {
-    btn.classList.add('loading');
-    btn.disabled = true;
-  } else {
-    btn.classList.remove('loading');
-    btn.disabled = false;
-  }
-}
-
-async function sendToServer(text) {
-  try {
-    await fetch(GAS_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'text/plain;charset=UTF-8' // ✅ สำคัญมาก
-      },
-      body: JSON.stringify({ text }) // ยังใช้ JSON ได้
-    });
-
-    return true;
-
-  } catch (err) {
-    console.error(err);
-    return false;
-  }
-}
-
-async function sendAction(action) {
-  const btn = action === 'approve'
-    ? document.getElementById('btnApprove')
-    : document.getElementById('btnReject');
-
+function sendAction(action) {
   const date = document.getElementById('inDate').value;
   if (!date) {
-    showToast('กรุณาเลือกวัน');
+    alert('กรุณาเลือกวัน');
     return;
   }
 
-  setLoading(btn, true);
+  const text = getCommand(action);
 
-  const command = getCommand(action);
-  const ok = await sendToServer(command);
-
-  setLoading(btn, false);
-
-  if (ok) {
-    showToast('✅ ส่งแล้ว: ' + command);
-  } else {
-    showToast('❌ ส่งไม่สำเร็จ');
-  }
+  const url = `https://line.me/R/msg/text/?${encodeURIComponent(text)}`;
+  window.open(url, '_blank');
 }
 
-async function sendPending() {
-  const btn = document.getElementById('btnPending');
-
-  setLoading(btn, true);
-
-  const ok = await sendToServer('รายการรอตรวจสอบ');
-
-  setLoading(btn, false);
-
-  if (ok) {
-    showToast('📋 ส่งรายการรอตรวจสอบแล้ว');
-  } else {
-    showToast('❌ ส่งไม่สำเร็จ');
-  }
+function sendPending() {
+  const text = "รายการรอตรวจสอบ";
+  const url = `https://line.me/R/msg/text/?${encodeURIComponent(text)}`;
+  window.open(url, '_blank');
 }
 </script>
 </body>
