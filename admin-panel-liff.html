@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel — ระบบจองที่พัก</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Chakra+Petch:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0D1117;
+      --surface: #161B22;
+      --surface2: #1C2330;
+      --border: #30363D;
+      --primary: #58A6FF;
+      --primary-dim: rgba(88,166,255,0.12);
+      --success: #3FB950;
+      --success-dim: rgba(63,185,80,0.12);
+      --danger: #F85149;
+      --danger-dim: rgba(248,81,73,0.12);
+      --warning: #D29922;
+      --warning-dim: rgba(210,153,34,0.12);
+      --text: #E6EDF3;
+      --text-muted: #7D8590;
+      --text-dim: #484F58;
+      --accent: #F0883E;
+      --radius: 10px;
+      --font-display: 'Chakra Petch', sans-serif;
+      --font-body: 'Sarabun', sans-serif;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(88,166,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(88,166,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      top: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 400px;
+      background: radial-gradient(ellipse, rgba(88,166,255,0.08) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── LIFF Gate Screens ─── */
+    #gateScreen {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      flex-direction: column;
+      gap: 20px;
+      text-align: center;
+    }
+    #gateScreen.hidden { display: none; }
+
+    .gate-icon {
+      font-size: 56px;
+      line-height: 1;
+      animation: float 3s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .gate-spinner {
+      width: 40px; height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+      margin: 0 auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .gate-title {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 0.3px;
+    }
+    .gate-sub {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      max-width: 300px;
+    }
+
+    /* Blocked screen */
+    #blockedScreen {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 500;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      flex-direction: column;
+      gap: 16px;
+      text-align: center;
+    }
+    #blockedScreen.show { display: flex; }
+
+    .blocked-box {
+      background: var(--surface);
+      border: 1px solid rgba(248,81,73,0.3);
+      border-radius: 16px;
+      padding: 36px 28px;
+      max-width: 340px;
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+    .blocked-box::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--danger);
+    }
+    .blocked-icon {
+      font-size: 52px;
+      margin-bottom: 16px;
+      display: block;
+    }
+    .blocked-title {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--danger);
+      margin-bottom: 10px;
+    }
+    .blocked-sub {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+    .blocked-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--danger-dim);
+      border: 1px solid rgba(248,81,73,0.2);
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--danger);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 16px;
+    }
+
+    /* ─── Main App (hidden until LIFF verified) ─── */
+    #appContent {
+      display: none;
+      position: relative;
+      z-index: 1;
+    }
+    #appContent.show { display: block; }
+
+    /* ─── LIFF user info bar ─── */
+    .liff-user-bar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+      z-index: 2;
+    }
+    .liff-avatar {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      flex-shrink: 0;
+    }
+    .liff-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      flex: 1;
+    }
+    .liff-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(0, 199, 90, 0.12);
+      border: 1px solid rgba(0, 199, 90, 0.25);
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #00C75A;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    /* ─── Main layout ─── */
+    .wrapper {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 16px 60px;
+      position: relative;
+      z-index: 1;
+    }
+
+    header {
+      padding: 32px 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 28px;
+    }
+    .header-left { display: flex; align-items: center; gap: 14px; }
+    .logo-mark {
+      width: 44px; height: 44px;
+      background: linear-gradient(135deg, var(--primary), #388BFD);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 0 20px rgba(88,166,255,0.3);
+    }
+    .header-title {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      color: var(--text);
+    }
+    .header-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .live-dot {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+      color: var(--success);
+      font-weight: 600;
+    }
+    .live-dot::before {
+      content: '';
+      width: 8px; height: 8px;
+      background: var(--success);
+      border-radius: 50%;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(63,185,80,0.4); }
+      50% { opacity: 0.7; box-shadow: 0 0 0 5px rgba(63,185,80,0); }
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 500px) { .stats-row { grid-template-columns: 1fr 1fr; } }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      position: relative;
+      overflow: hidden;
+      animation: fadeUp 0.5s ease both;
+    }
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+    }
+    .stat-card.pending::before { background: var(--warning); }
+    .stat-card.confirmed::before { background: var(--success); }
+    .stat-card.rooms::before { background: var(--primary); }
+    .stat-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+    .stat-value {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .stat-card.pending .stat-value { color: var(--warning); }
+    .stat-card.confirmed .stat-value { color: var(--success); }
+    .stat-card.rooms .stat-value { color: var(--primary); }
+    .stat-sub { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-title::before {
+      content: '';
+      width: 3px; height: 14px;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+    .btn-refresh {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 7px 14px;
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-family: var(--font-body);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-refresh:hover { border-color: var(--primary); color: var(--primary); }
+    .btn-refresh.loading .refresh-icon { animation: spin 0.8s linear infinite; }
+    .refresh-icon { display: inline-block; }
+
+    .bookings-list { display: flex; flex-direction: column; gap: 12px; }
+
+    .booking-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      animation: fadeUp 0.4s ease both;
+      transition: border-color 0.2s;
+    }
+    .booking-card:hover { border-color: rgba(88,166,255,0.3); }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .booking-card-top {
+      padding: 16px 18px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+
+    .room-chip {
+      width: 48px; height: 48px;
+      background: var(--primary-dim);
+      border: 1px solid rgba(88,166,255,0.2);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--primary);
+      flex-shrink: 0;
+    }
+
+    .booking-info { flex: 1; min-width: 0; }
+    .booking-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .booking-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .meta-pill {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .meta-pill span { color: var(--text); font-weight: 500; }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .status-badge.pending {
+      background: var(--warning-dim);
+      color: var(--warning);
+      border: 1px solid rgba(210,153,34,0.2);
+    }
+    .status-badge.confirmed {
+      background: var(--success-dim);
+      color: var(--success);
+      border: 1px solid rgba(63,185,80,0.2);
+    }
+
+    .slip-section {
+      border-top: 1px solid var(--border);
+      padding: 14px 18px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+    .slip-thumb {
+      width: 80px; height: 60px;
+      border-radius: 7px;
+      object-fit: cover;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: transform 0.2s, border-color 0.2s;
+      background: var(--surface2);
+    }
+    .slip-thumb:hover { transform: scale(1.04); border-color: var(--primary); }
+    .slip-hint { font-size: 11px; color: var(--text-dim); margin-top: 3px; }
+    .slip-meta { flex: 1; }
+
+    .booking-actions {
+      border-top: 1px solid var(--border);
+      padding: 14px 18px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .btn-action {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 11px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: var(--font-body);
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s;
+      letter-spacing: 0.2px;
+    }
+    .btn-approve {
+      background: var(--success-dim);
+      color: var(--success);
+      border: 1px solid rgba(63,185,80,0.25);
+    }
+    .btn-approve:hover { background: rgba(63,185,80,0.2); box-shadow: 0 0 14px rgba(63,185,80,0.2); }
+    .btn-approve:active { transform: scale(0.97); }
+
+    .btn-reject {
+      background: var(--danger-dim);
+      color: var(--danger);
+      border: 1px solid rgba(248,81,73,0.25);
+    }
+    .btn-reject:hover { background: rgba(248,81,73,0.2); box-shadow: 0 0 14px rgba(248,81,73,0.2); }
+    .btn-reject:active { transform: scale(0.97); }
+
+    .btn-action:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+
+    .btn-action .btn-spinner {
+      width: 14px; height: 14px;
+      border: 2px solid currentColor;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    .btn-action.loading .btn-spinner { display: block; }
+    .btn-action.loading .btn-label { display: none; }
+
+    #toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 20px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+      z-index: 999;
+      opacity: 0;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    #toast.success { border-color: rgba(63,185,80,0.4); }
+    #toast.error { border-color: rgba(248,81,73,0.4); }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-dim);
+    }
+    .empty-state-icon { font-size: 48px; margin-bottom: 14px; opacity: 0.5; }
+    .empty-state-title { font-size: 16px; color: var(--text-muted); margin-bottom: 6px; }
+    .empty-state-sub { font-size: 13px; }
+
+    .loading-state { display: flex; flex-direction: column; gap: 12px; }
+    .skeleton {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      height: 160px;
+      position: relative;
+      overflow: hidden;
+    }
+    .skeleton::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent);
+      animation: shimmer 1.5s infinite;
+    }
+    @keyframes shimmer {
+      from { transform: translateX(-100%); }
+      to   { transform: translateX(100%); }
+    }
+
+    #lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      backdrop-filter: blur(4px);
+    }
+    #lightbox.open { display: flex; animation: fadeIn 0.2s ease; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    #lightbox img {
+      max-width: 100%;
+      max-height: 85vh;
+      border-radius: 10px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    }
+    #lightbox-close {
+      position: absolute;
+      top: 20px; right: 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+    #lightbox-close:hover { background: var(--danger); border-color: var(--danger); }
+
+    .booking-card.done {
+      opacity: 0.4;
+      pointer-events: none;
+      transition: opacity 0.4s;
+    }
+
+    .confirmed-section { margin-top: 36px; }
+  </style>
+</head>
+<body>
+
+  <!-- ── Gate: กำลังตรวจสอบ ── -->
+  <div id="gateScreen">
+    <div class="gate-spinner"></div>
+    <div class="gate-title">กำลังตรวจสอบสิทธิ์</div>
+    <div class="gate-sub">กรุณารอสักครู่…</div>
+  </div>
+
+  <!-- ── Blocked: ไม่ผ่าน LIFF ── -->
+  <div id="blockedScreen">
+    <div class="blocked-box">
+      <span class="blocked-icon">🔒</span>
+      <div class="blocked-title">ไม่สามารถเข้าถึงได้</div>
+      <div class="blocked-sub">
+        หน้านี้เปิดได้เฉพาะจาก<br>
+        <strong style="color:var(--text);">LINE Application</strong> เท่านั้น<br><br>
+        กรุณาเปิดลิงก์นี้ผ่าน LINE<br>หรือสแกน QR Code จาก LINE
+      </div>
+      <div class="blocked-badge">⛔ LINE LIFF Only</div>
+    </div>
+  </div>
+
+  <!-- ── LIFF User Bar ── -->
+  <div id="liffUserBar" style="display:none;" class="liff-user-bar">
+    <img id="liffAvatar" class="liff-avatar" src="" alt="avatar" onerror="this.style.display='none'">
+    <span id="liffName" class="liff-name">—</span>
+    <span class="liff-badge">✓ LINE</span>
+  </div>
+
+  <!-- ── Main App Content ── -->
+  <div id="appContent">
+    <div class="wrapper">
+
+      <header>
+        <div class="header-left">
+          <div class="logo-mark">🏨</div>
+          <div>
+            <div class="header-title">Admin Panel</div>
+            <div class="header-sub">ระบบจองที่พัก</div>
+          </div>
+        </div>
+        <div class="live-dot">LIVE</div>
+      </header>
+
+      <div class="stats-row">
+        <div class="stat-card pending">
+          <div class="stat-label">รอยืนยัน</div>
+          <div class="stat-value" id="statPending">—</div>
+          <div class="stat-sub">รายการ</div>
+        </div>
+        <div class="stat-card confirmed">
+          <div class="stat-label">ยืนยันแล้ว</div>
+          <div class="stat-value" id="statConfirmed">—</div>
+          <div class="stat-sub">รายการ</div>
+        </div>
+        <div class="stat-card rooms">
+          <div class="stat-label">ห้องทั้งหมด</div>
+          <div class="stat-value">3</div>
+          <div class="stat-sub">A / B / C</div>
+        </div>
+      </div>
+
+      <div class="section-header">
+        <div class="section-title">รอยืนยัน</div>
+        <button class="btn-refresh" id="refreshBtn" onclick="loadBookings()">
+          <span class="refresh-icon">↻</span> รีเฟรช
+        </button>
+      </div>
+      <div id="pendingList">
+        <div class="loading-state">
+          <div class="skeleton"></div>
+          <div class="skeleton"></div>
+        </div>
+      </div>
+
+      <div class="confirmed-section">
+        <div class="section-header">
+          <div class="section-title">ยืนยันแล้ว (30 วัน)</div>
+        </div>
+        <div id="confirmedList">
+          <div class="loading-state">
+            <div class="skeleton"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Lightbox -->
+  <div id="lightbox" onclick="closeLightbox()">
+    <button id="lightbox-close" onclick="closeLightbox()">✕</button>
+    <img id="lightboxImg" src="" alt="สลิป">
+  </div>
+
+  <div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════
+// ⚙️ CONFIG — แก้ค่าด้านล่าง
+// ══════════════════════════════════════
+const CFG = {
+  liffId:  'YOUR_LIFF_ID_HERE',                    // ← วาง LIFF ID  (เช่น 1234567890-AbCdEfGh)
+  token:   'YOUR_LINE_CHANNEL_ACCESS_TOKEN_HERE',   // ← วาง LINE Channel Access Token
+  gasUrl:  'https://script.google.com/macros/s/YOUR_GAS_ID/exec',  // ← วาง GAS Web App URL
+  adminId: 'YOUR_ADMIN_LINE_USER_ID_HERE'           // ← วาง Admin LINE User ID (ถ้าไม่ใช้ auto-detect)
+};
+// ══════════════════════════════════════
+
+// ─── LIFF Init & Gate ───────────────────────────────────────
+async function initLiff() {
+  const gate    = document.getElementById('gateScreen');
+  const blocked = document.getElementById('blockedScreen');
+  const app     = document.getElementById('appContent');
+  const userBar = document.getElementById('liffUserBar');
+
+  try {
+    await liff.init({ liffId: CFG.liffId });
+  } catch (e) {
+    console.error('LIFF init failed:', e);
+    // LIFF SDK ไม่ทำงาน = ไม่ใช่ LINE environment
+    gate.classList.add('hidden');
+    blocked.classList.add('show');
+    return;
+  }
+
+  // ตรวจสอบว่าเปิดจาก LINE จริงๆ
+  if (!liff.isInClient()) {
+    gate.classList.add('hidden');
+    blocked.classList.add('show');
+    return;
+  }
+
+  // ผ่านแล้ว — ดึงข้อมูล profile
+  try {
+    const profile = await liff.getProfile();
+
+    // แสดง user bar
+    document.getElementById('liffAvatar').src = profile.pictureUrl || '';
+    document.getElementById('liffName').textContent = profile.displayName || 'LINE User';
+    userBar.style.display = 'flex';
+
+    // ใช้ userId จาก LIFF แทน config (ถ้า adminId ยังเป็นค่า default)
+    if (CFG.adminId === 'YOUR_ADMIN_LINE_USER_ID_HERE') {
+      CFG.adminId = profile.userId;
+    }
+  } catch(e) {
+    console.warn('ดึง profile ไม่สำเร็จ:', e);
+  }
+
+  // แสดง app
+  gate.classList.add('hidden');
+  app.classList.add('show');
+  loadBookings();
+}
+
+// ─── Load Bookings ───────────────────────────────────────────
+async function loadBookings() {
+  const btn = document.getElementById('refreshBtn');
+  btn.classList.add('loading');
+
+  try {
+    const url = CFG.gasUrl + '?action=getBookings&token=' + encodeURIComponent(CFG.token);
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+
+    renderPending(data.pending || []);
+    renderConfirmed(data.confirmed || []);
+    document.getElementById('statPending').textContent = (data.pending || []).length;
+    document.getElementById('statConfirmed').textContent = (data.confirmed || []).length;
+  } catch(e) {
+    console.error('โหลดข้อมูลไม่สำเร็จ:', e);
+    renderError('pendingList');
+    renderError('confirmedList');
+    document.getElementById('statPending').textContent = '—';
+    document.getElementById('statConfirmed').textContent = '—';
+    showToast('⚠️ โหลดข้อมูลไม่สำเร็จ: ' + e.message, 'error');
+  }
+
+  btn.classList.remove('loading');
+}
+
+function renderError(elId) {
+  document.getElementById(elId).innerHTML = `
+    <div class="empty-state">
+      <div class="empty-state-icon">⚠️</div>
+      <div class="empty-state-title">โหลดข้อมูลไม่สำเร็จ</div>
+      <div class="empty-state-sub">กรุณาตรวจสอบ config และลองรีเฟรชอีกครั้ง</div>
+    </div>`;
+}
+
+function renderPending(list) {
+  const el = document.getElementById('pendingList');
+  if (!list.length) {
+    el.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">✅</div>
+        <div class="empty-state-title">ไม่มีรายการรอยืนยัน</div>
+        <div class="empty-state-sub">เรียบร้อยดีค่า 🎉</div>
+      </div>`;
+    return;
+  }
+  el.innerHTML = `<div class="bookings-list">${list.map((b, i) => bookingCard(b, i, 'pending')).join('')}</div>`;
+}
+
+function renderConfirmed(list) {
+  const el = document.getElementById('confirmedList');
+  if (!list.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-state-sub" style="color:var(--text-dim)">ยังไม่มีรายการที่ยืนยันแล้ว</div></div>`;
+    return;
+  }
+  el.innerHTML = `<div class="bookings-list">${list.map((b, i) => bookingCard(b, i, 'confirmed')).join('')}</div>`;
+}
+
+function bookingCard(b, i, type) {
+  const slipHtml = b.slipUrl
+    ? `<img class="slip-thumb" src="${b.slipUrl}" alt="สลิป" onclick="openLightbox('${b.slipUrl}')" onerror="this.style.display='none'">`
+    : `<div style="font-size:11px;color:var(--text-dim);padding:4px 0;">⚠️ ยังไม่ส่งสลิป</div>`;
+
+  const actionsHtml = type === 'pending' ? `
+    <div class="booking-actions">
+      <button class="btn-action btn-approve" onclick="handleAction('approve', '${b.room}', '${b.checkIn}', '${b.name}', this)">
+        <span class="btn-spinner"></span>
+        <span class="btn-label">✅ อนุมัติ</span>
+      </button>
+      <button class="btn-action btn-reject" onclick="handleAction('reject', '${b.room}', '${b.checkIn}', '${b.name}', this)">
+        <span class="btn-spinner"></span>
+        <span class="btn-label">❌ ปฏิเสธ</span>
+      </button>
+    </div>` : '';
+
+  const badge = type === 'pending'
+    ? `<span class="status-badge pending">⏳ รอยืนยัน</span>`
+    : `<span class="status-badge confirmed">✅ ยืนยันแล้ว</span>`;
+
+  return `
+    <div class="booking-card" id="card-${b.room}-${b.checkIn}" style="animation-delay:${i * 0.07}s">
+      <div class="booking-card-top">
+        <div class="room-chip">${b.room}</div>
+        <div class="booking-info">
+          <div class="booking-name">${b.name}</div>
+          <div class="booking-meta">
+            <div class="meta-pill">📞 <span>${b.phone}</span></div>
+            <div class="meta-pill">📅 <span>${b.checkIn} → ${b.checkOut}</span></div>
+            <div class="meta-pill">🌙 <span>${b.nights || '?'} คืน</span></div>
+          </div>
+          ${badge}
+        </div>
+      </div>
+      <div class="slip-section">
+        ${slipHtml}
+        <div class="slip-meta">
+          <div style="font-size:12px;color:var(--text-muted);font-weight:600;margin-bottom:4px;">💳 สลิปโอนเงิน</div>
+          ${b.slipUrl ? `<div class="slip-hint">แตะรูปเพื่อขยาย</div>` : ''}
+          ${b.bookedAt ? `<div class="slip-hint" style="margin-top:6px;">🕐 จองเมื่อ: ${formatThaiTime(b.bookedAt)}</div>` : ''}
+        </div>
+      </div>
+      ${actionsHtml}
+    </div>`;
+}
+
+async function handleAction(action, room, checkIn, name, btnEl) {
+  const isApprove = action === 'approve';
+  const command = isApprove
+    ? `อนุมัติ : ${room} | ${checkIn}`
+    : `ปฏิเสธ : ${room} | ${checkIn}`;
+
+  const confirmMsg = isApprove
+    ? `อนุมัติการจองห้อง ${room} วันที่ ${checkIn} (${name}) ?\n\nระบบจะส่งคำสั่ง "${command}" เข้า LINE ให้อัตโนมัติ`
+    : `ปฏิเสธการจองห้อง ${room} วันที่ ${checkIn} (${name}) ?\n\nระบบจะส่งคำสั่ง "${command}" เข้า LINE ให้อัตโนมัติ`;
+
+  if (!confirm(confirmMsg)) return;
+
+  const card = document.getElementById(`card-${room}-${checkIn}`);
+  const allBtns = card.querySelectorAll('.btn-action');
+  allBtns.forEach(b => { b.disabled = true; });
+  btnEl.classList.add('loading');
+
+  try {
+    const res = await fetch('https://api.line.me/v2/bot/message/push', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + CFG.token
+      },
+      body: JSON.stringify({
+        to: CFG.adminId,
+        messages: [{ type: 'text', text: command }]
+      })
+    });
+
+    if (res.ok) {
+      showToast(isApprove ? `✅ ส่งคำสั่งอนุมัติแล้ว!` : `❌ ส่งคำสั่งปฏิเสธแล้ว!`, isApprove ? 'success' : 'error');
+      card.classList.add('done');
+      setTimeout(() => card.remove(), 600);
+
+      const pendingEl = document.getElementById('statPending');
+      const cur = parseInt(pendingEl.textContent) || 1;
+      pendingEl.textContent = Math.max(0, cur - 1);
+    } else {
+      const err = await res.json();
+      throw new Error(err.message || 'LINE API error');
+    }
+  } catch(e) {
+    console.error(e);
+    showToast('❌ ส่งคำสั่งไม่สำเร็จ: ' + e.message, 'error');
+    allBtns.forEach(b => { b.disabled = false; });
+    btnEl.classList.remove('loading');
+  }
+}
+
+function openLightbox(url) {
+  document.getElementById('lightboxImg').src = url;
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+}
+
+let toastTimer;
+function showToast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + (type || '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = ''; }, 3200);
+}
+
+function formatThaiTime(iso) {
+  try {
+    const d = new Date(iso);
+    return d.toLocaleString('th-TH', { timeZone: 'Asia/Bangkok', hour12: false,
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit' });
+  } catch(e) { return iso; }
+}
+
+// ─── Start ───────────────────────────────────────────────────
+initLiff();
+</script>
+</body>
+</html>
